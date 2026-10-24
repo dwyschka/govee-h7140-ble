@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+crashdump/
+dumps/
+jadx_out/
+jadx_res/
+jadx_humidifier/
+jadx_humres/
+repos/
+apkm/
+.DS_Store
+
+*.apkm

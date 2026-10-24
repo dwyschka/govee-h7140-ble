@@ -1,0 +1,145 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Govee H7140 BLE",
+        "description": "Add a Govee H7140 Smart Humidifier Lite over Bluetooth. The device must be powered, in range and not connected to the Govee app.",
+        "data": {
+          "address": "Bluetooth address or macOS UUID",
+          "name": "Name"
+        },
+        "data_description": {
+          "address": "The address shown by the Bluetooth integration. On macOS this is a CoreBluetooth UUID.",
+          "name": "Friendly name for the humidifier."
+        }
+      },
+      "bluetooth_confirm": {
+        "title": "Govee H7140 found",
+        "description": "Do you want to add {name} ({model}) at {address}?",
+        "data": {
+          "name": "Name"
+        }
+      }
+    },
+    "error": {
+      "not_found": "The device is not visible to Home Assistant's Bluetooth integration. Power it on, move it closer, or add it via Bluetooth discovery.",
+      "cannot_connect": "Could not connect to the humidifier."
+    },
+    "abort": {
+      "already_configured": "This H7140 is already configured.",
+      "no_devices_found": "No supported Govee H7140 was found."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Govee H7140 options",
+        "description": "Polling, connection and experimental protocol options.",
+        "data": {
+          "poll_interval": "Poll interval (seconds)",
+          "idle_disconnect": "Disconnect after idle (seconds, 0 = immediately)",
+          "enable_adv_humidity": "Read current humidity from advertisements",
+          "enable_experimental": "Enable experimental features",
+          "enable_experimental_scenes": "Enable experimental night-light scenes",
+          "enable_experimental_auto_stop": "Enable experimental Auto Stop switch"
+        },
+        "data_description": {
+          "poll_interval": "How often the humidifier is polled over GATT.",
+          "idle_disconnect": "Keep the BLE link open for this long after the last operation. 0 disconnects immediately.",
+          "enable_adv_humidity": "The H7140 advertisement contains a humidity byte; it is not exposed by Govee's cloud API.",
+          "enable_experimental": "Required for the scene and Auto Stop switches. These frames are modelled and may need firmware-specific tuning.",
+          "enable_experimental_scenes": "Adds Forest/Ocean/Wetland/Leisurely/Sleep effects to the night light.",
+          "enable_experimental_auto_stop": "Adds an Auto Stop switch (0x17 selector)."
+        }
+      }
+    }
+  },
+  "entity": {
+    "light": {
+      "night_light": {
+        "name": "Night Light"
+      }
+    },
+    "sensor": {
+      "current_humidity": {
+        "name": "Current Humidity"
+      },
+      "target_humidity": {
+        "name": "Target Humidity"
+      },
+      "work_mode": {
+        "name": "Work Mode"
+      },
+      "mist_level": {
+        "name": "Mist Level"
+      },
+      "low_gear": {
+        "name": "Low Gear Limit"
+      },
+      "high_gear": {
+        "name": "High Gear Limit"
+      },
+      "firmware": {
+        "name": "Firmware"
+      },
+      "hardware": {
+        "name": "Hardware"
+      },
+      "mcu_firmware": {
+        "name": "MCU Firmware"
+      },
+      "mcu_hardware": {
+        "name": "MCU Hardware"
+      },
+      "serial": {
+        "name": "Serial"
+      },
+      "ble_mac": {
+        "name": "BLE MAC"
+      },
+      "rssi": {
+        "name": "RSSI"
+      },
+      "last_seen": {
+        "name": "Last Seen"
+      }
+    },
+    "binary_sensor": {
+      "water_lack": {
+        "name": "Water Tank Empty"
+      }
+    },
+    "number": {
+      "mist_level": {
+        "name": "Mist Level"
+      }
+    },
+    "switch": {
+      "auto_stop": {
+        "name": "Auto Stop"
+      }
+    },
+    "button": {
+      "refresh": {
+        "name": "Refresh"
+      }
+    }
+  },
+  "services": {
+    "send_frame": {
+      "name": "Send raw BLE frame",
+      "description": "Send a raw Govee frame to the humidifier for diagnostics or unsupported features.",
+      "fields": {
+        "frame": {
+          "name": "Frame",
+          "description": "Hex bytes, e.g. AA 05 00 or a complete 20-byte frame."
+        },
+        "expect_response": {
+          "name": "Wait for response",
+          "description": "Return the first AA response within two seconds."
+        }
+      }
+    }
+  }
+}

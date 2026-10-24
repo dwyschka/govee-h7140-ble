@@ -1,0 +1,26 @@
+send_frame:
+  name: Send raw BLE frame
+  description: >-
+    Send a raw 20-byte Govee frame (or a shorter command body) to the humidifier.
+    This is intended for diagnostics and for features that are not yet modelled
+    by the integration.
+  target:
+    device:
+      integration: govee_h7140_ble
+  fields:
+    frame:
+      name: Frame
+      description: >-
+        Hex bytes, e.g. "AA 05 00" (query work mode) or a complete 20-byte frame.
+        A checksum is appended automatically for short bodies.
+      required: true
+      example: "AA 05 03"
+      selector:
+        text:
+    expect_response:
+      name: Wait for response
+      description: Wait up to two seconds and return the first AA response.
+      required: false
+      default: true
+      selector:
+        boolean:

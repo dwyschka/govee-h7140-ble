@@ -1,0 +1,145 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Govee H7140 BLE",
+        "description": "Fügt einen Govee H7140 Smart Humidifier Lite über Bluetooth hinzu. Das Gerät muss eingeschaltet, in Reichweite und nicht mit der Govee-App verbunden sein.",
+        "data": {
+          "address": "Bluetooth-Adresse oder macOS-UUID",
+          "name": "Name"
+        },
+        "data_description": {
+          "address": "Die Adresse aus der Bluetooth-Integration. Unter macOS ist das eine CoreBluetooth-UUID.",
+          "name": "Anzeigename für den Luftbefeuchter."
+        }
+      },
+      "bluetooth_confirm": {
+        "title": "Govee H7140 gefunden",
+        "description": "Möchtest du {name} ({model}) unter {address} hinzufügen?",
+        "data": {
+          "name": "Name"
+        }
+      }
+    },
+    "error": {
+      "not_found": "Das Gerät ist für die Bluetooth-Integration von Home Assistant nicht sichtbar. Einschalten, näher herangehen oder über die Bluetooth-Erkennung hinzufügen.",
+      "cannot_connect": "Verbindung zum Luftbefeuchter fehlgeschlagen."
+    },
+    "abort": {
+      "already_configured": "Dieser H7140 ist bereits eingerichtet.",
+      "no_devices_found": "Kein unterstützter Govee H7140 gefunden."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Govee H7140 Optionen",
+        "description": "Abfrage, Verbindung und experimentelle Protokolloptionen.",
+        "data": {
+          "poll_interval": "Abfrageintervall (Sekunden)",
+          "idle_disconnect": "Nach Leerlauf trennen (Sekunden, 0 = sofort)",
+          "enable_adv_humidity": "Aktuelle Luftfeuchte aus Advertisement lesen",
+          "enable_experimental": "Experimentelle Funktionen aktivieren",
+          "enable_experimental_scenes": "Experimentelle Nachtabtlicht-Szenen aktivieren",
+          "enable_experimental_auto_stop": "Experimentellen Auto-Stop-Schalter aktivieren"
+        },
+        "data_description": {
+          "poll_interval": "Wie oft der Luftbefeuchter per GATT abgefragt wird.",
+          "idle_disconnect": "BLE-Verbindung nach der letzten Aktion so lange offen halten. 0 trennt sofort.",
+          "enable_adv_humidity": "Das H7140-Advertisement enthält ein Feuchtebyte; die Govee-Cloud-API liefert es nicht.",
+          "enable_experimental": "Voraussetzung für Szenen und Auto-Stop. Diese Frames sind modelliert und können firmwareabhängig sein.",
+          "enable_experimental_scenes": "Ergänzt Forest/Ocean/Wetland/Leisurely/Sleep beim Nachtabtlicht.",
+          "enable_experimental_auto_stop": "Ergänzt einen Auto-Stop-Schalter (0x17-Selektor)."
+        }
+      }
+    }
+  },
+  "entity": {
+    "light": {
+      "night_light": {
+        "name": "Nachtabtlicht"
+      }
+    },
+    "sensor": {
+      "current_humidity": {
+        "name": "Aktuelle Luftfeuchte"
+      },
+      "target_humidity": {
+        "name": "Ziel-Luftfeuchte"
+      },
+      "work_mode": {
+        "name": "Betriebsmodus"
+      },
+      "mist_level": {
+        "name": "Nebelstufe"
+      },
+      "low_gear": {
+        "name": "Untere Stufe (Limit)"
+      },
+      "high_gear": {
+        "name": "Obere Stufe (Limit)"
+      },
+      "firmware": {
+        "name": "Firmware"
+      },
+      "hardware": {
+        "name": "Hardware"
+      },
+      "mcu_firmware": {
+        "name": "MCU-Firmware"
+      },
+      "mcu_hardware": {
+        "name": "MCU-Hardware"
+      },
+      "serial": {
+        "name": "Seriennummer"
+      },
+      "ble_mac": {
+        "name": "BLE-MAC"
+      },
+      "rssi": {
+        "name": "RSSI"
+      },
+      "last_seen": {
+        "name": "Zuletzt gesehen"
+      }
+    },
+    "binary_sensor": {
+      "water_lack": {
+        "name": "Wassertank leer"
+      }
+    },
+    "number": {
+      "mist_level": {
+        "name": "Nebelstufe"
+      }
+    },
+    "switch": {
+      "auto_stop": {
+        "name": "Auto-Stop"
+      }
+    },
+    "button": {
+      "refresh": {
+        "name": "Aktualisieren"
+      }
+    }
+  },
+  "services": {
+    "send_frame": {
+      "name": "Rohen BLE-Frame senden",
+      "description": "Sendet einen rohen Govee-Frame zur Diagnose oder für noch nicht modellierte Funktionen.",
+      "fields": {
+        "frame": {
+          "name": "Frame",
+          "description": "Hex-Bytes, z. B. AA 05 00 oder ein kompletter 20-Byte-Frame."
+        },
+        "expect_response": {
+          "name": "Auf Antwort warten",
+          "description": "Gibt die erste AA-Antwort innerhalb von zwei Sekunden zurück."
+        }
+      }
+    }
+  }
+}

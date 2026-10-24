@@ -1,0 +1,8 @@
+pytest>=8
+pytest-asyncio>=0.23
+pytest-homeassistant-custom-component
+ruff
+# Optional Home Assistant test-runtime imports on non-Linux hosts
+aiousbwatcher
+aiohasupervisor
+serialx
