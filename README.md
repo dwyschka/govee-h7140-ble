@@ -109,6 +109,14 @@ Kurzfassung:
 - **Timer**: Die App besitzt Zeitplanseiten; das BLE-Timerformat (`aa 16`/`aa 17`) ist noch nicht vollständig entschlüsselt.
 - **Aktuelle Luftfeuchte**: Wird aus dem Advertisement gelesen. Wenn das Gerät `0` sendet (kein Sensor / Standby), bleibt der Sensor unbekannt.
 
+## Fehlersuche: „überall unbekannt“
+
+- **Falsches Gerät eingerichtet?** In Reichweite waren zwei H7140: `ihoment_H7140_4491` (antwortet, V1-verschlüsselt, getestet) und `ihoment_H7140_3D13` (Advertisement `ec 00 02 01 00 40`, Verbindung lief im Test in einen Timeout). Wenn HA den 3D13-Eintrag nutzt, bleiben alle GATT-Werte unbekannt und das Nachtlicht reagiert nicht.
+- **Gerät aufwecken:** Power-Taste am Gerät drücken, Wassertank prüfen. Ein Standby-/Schutzgerät nimmt ggf. keine GATT-Verbindung an.
+- **Govee-App schließen** und Bluetooth am Handy kurz ausschalten; nur ein BLE-Central gleichzeitig.
+- **Logs:** Bei fehlgeschlagener Protokollaushandlung steht `BLE protocol negotiation failed` bzw. `could not connect` im Log. Diagnose über Einstellungen → Geräte & Dienste → Govee H7140 BLE → Diagnose.
+- **Nachtlicht** wird über GATT geschrieben (`3A 1B …`) und funktioniert nur, wenn die Integration verbinden kann. Am getesteten 4491 wurde es auch im Standby verifiziert.
+
 ## Debugging
 
 ```yaml

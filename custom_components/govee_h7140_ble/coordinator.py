@@ -56,7 +56,6 @@ from .encryption import (
     encrypt_frame,
     parse_session_key,
     try_decrypt,
-    validate_handshake_confirmation,
 )
 from .protocol import (
     AdvState,
@@ -291,6 +290,9 @@ class GoveeH7140Client:
             await self._client.start_notify(
                 NOTIFY_CHARACTERISTIC_UUID, self._on_notify
             )
+            # Bluetooth proxies may need a moment before the first
+            # notification is routed after the CCCD write.
+            await asyncio.sleep(0.35)
             _LOGGER.debug("%s: connected", self.address)
             await self._async_negotiate()
         except (BleakError, TimeoutError, EOFError, OSError) as err:
@@ -357,6 +359,13 @@ class GoveeH7140Client:
         )
 
     async def _write(self, frame: bytes) -> None:
+        if self._encryption == "unknown":
+            await self._async_negotiate()
+        if self._encryption == "unknown":
+            raise UpdateFailed(
+                "BLE protocol negotiation failed; the H7140 is off, asleep, "
+                "or the encrypted handshake was not answered"
+            )
         await self._write_wire(self._encode_frame(frame))
 
     async def _async_negotiate(self) -> None:
@@ -364,68 +373,84 @@ class GoveeH7140Client:
         if self._negotiating or self._encryption != "unknown":
             return
         now = self.hass.loop.time()
-        if now - self._last_negotiation_attempt < 60:
+        if now - self._last_negotiation_attempt < 10:
             return
         self._last_negotiation_attempt = now
         self._negotiating = True
         try:
-            self._raw_frames.clear()
-            self._frames.clear()
-            # 1) Plaintext probe.  The H7140 firmware revisions observed in
-            #    the wild either answer AA 01 in plaintext or ignore it.
-            await self._write_wire(query_power())
-            await asyncio.sleep(1.0)
-            for raw in list(self._raw_frames):
-                try:
-                    Frame.parse(raw)
-                except ValueError:
-                    continue
-                self._encryption = "plaintext"
-                _LOGGER.debug("%s: plaintext protocol", self.address)
-                return
-
-            # 2) Govee V1 handshake.  The e7 01 request is encrypted with the
-            #    public communication key; the reply carries the session key.
+            # 1) Govee V1 handshake first.  This is the mode used by current
+            #    H7140 firmware.  The reply may take >1 s through a Bluetooth
+            #    proxy, so poll for up to 3 seconds and retry once.
             self._raw_frames.clear()
             self._frames.clear()
             request = build_handshake_request(0x01)
-            await self._write_wire(encrypt_frame(request, COMMUNICATION_KEY))
-            await asyncio.sleep(0.9)
             session_key: bytes | None = None
-            for raw in list(self._raw_frames):
-                plaintext = try_decrypt(raw, COMMUNICATION_KEY)
-                if plaintext is None or plaintext[:2] != b"\xe7\x01":
-                    continue
-                try:
-                    session_key = parse_session_key(plaintext)
-                except ValueError:
-                    continue
-                break
-            if session_key is None:
-                _LOGGER.debug("%s: no V1 handshake response", self.address)
+            for _attempt in range(2):
+                await self._write_wire(encrypt_frame(request, COMMUNICATION_KEY))
+                deadline = self.hass.loop.time() + 1.6
+                while self.hass.loop.time() < deadline:
+                    for raw in list(self._raw_frames):
+                        plaintext = try_decrypt(raw, COMMUNICATION_KEY)
+                        if plaintext is None or plaintext[:2] != b"\xe7\x01":
+                            continue
+                        try:
+                            session_key = parse_session_key(plaintext)
+                        except ValueError:
+                            continue
+                        break
+                    if session_key is not None:
+                        break
+                    await asyncio.sleep(0.1)
+                if session_key is not None:
+                    break
+
+            if session_key is not None:
+                confirmation = build_handshake_request(0x02)
+                await self._write_wire(
+                    encrypt_frame(confirmation, COMMUNICATION_KEY)
+                )
+                deadline = self.hass.loop.time() + 1.6
+                while self.hass.loop.time() < deadline:
+                    if any(
+                        (plaintext := try_decrypt(raw, COMMUNICATION_KEY))
+                        is not None
+                        and plaintext[:2] == b"\xe7\x02"
+                        for raw in list(self._raw_frames)
+                    ):
+                        break
+                    await asyncio.sleep(0.1)
+
+                self._session_key = session_key
+                self._encryption = "v1"
+                self._frames.clear()
+                self._raw_frames.clear()
+                _LOGGER.debug("%s: Govee V1 session established", self.address)
+                # A failed verification is not fatal; the next poll retries.
+                await self._query(query_power(), 0x01, timeout=1.6)
                 return
 
-            confirmation = build_handshake_request(0x02)
-            await self._write_wire(encrypt_frame(confirmation, COMMUNICATION_KEY))
-            await asyncio.sleep(0.6)
-            for raw in list(self._raw_frames):
-                plaintext = try_decrypt(raw, COMMUNICATION_KEY)
-                if plaintext is None or plaintext[:2] != b"\xe7\x02":
-                    continue
-                try:
-                    validate_handshake_confirmation(plaintext, confirmation)
-                except ValueError:
-                    continue
-                break
-
-            self._session_key = session_key
-            self._encryption = "v1"
-            self._frames.clear()
+            # 2) Plaintext fallback.  Some H7140/H714E firmware revisions do
+            #    not use the encrypted session.
             self._raw_frames.clear()
-            _LOGGER.debug("%s: Govee V1 session established", self.address)
-            # Verify the session with a query; a failed verification is not
-            # fatal, the next poll retries.
-            await self._query(query_power(), 0x01, timeout=1.0)
+            self._frames.clear()
+            await self._write_wire(query_power())
+            deadline = self.hass.loop.time() + 1.6
+            while self.hass.loop.time() < deadline:
+                for raw in list(self._raw_frames):
+                    try:
+                        Frame.parse(raw)
+                    except ValueError:
+                        continue
+                    self._encryption = "plaintext"
+                    _LOGGER.debug("%s: plaintext protocol", self.address)
+                    return
+                await asyncio.sleep(0.1)
+
+            _LOGGER.warning(
+                "%s: BLE protocol negotiation failed; device may be off, "
+                "in protection/standby, or connected to the Govee app",
+                self.address,
+            )
         finally:
             self._negotiating = False
 
@@ -510,18 +535,24 @@ class GoveeH7140Client:
             if self._encryption == "unknown":
                 await self._async_negotiate()
             try:
-                power = await self._query(query_power(), 0x01, timeout=1.5)
-                if power is None:
-                    # The device is off or in protection mode.  Do not burn a
-                    # long timeout on every other query; use the advertisement
-                    # state until it wakes up again.
+                responses = 0
+                if await self._query(query_power(), 0x01, timeout=1.5):
+                    responses += 1
+                if await self._query(query_mode(), 0x05, 0x00, timeout=1.2):
+                    responses += 1
+                if await self._query(
+                    query_target_humidity(), 0x05, 0x03, timeout=1.2
+                ):
+                    responses += 1
+                if await self._query(query_light(), 0x1B, 0x01, timeout=1.2):
+                    responses += 1
+
+                if responses == 0:
+                    # Nothing answered.  Keep the advertisement-derived state
+                    # instead of reporting a successful empty poll.
                     if self.state.adv is not None and self.state.adv.power is not None:
                         self.state.power = self.state.adv.power
                     return self.state
-
-                await self._query(query_mode(), 0x05, 0x00, timeout=1.2)
-                await self._query(query_target_humidity(), 0x05, 0x03, timeout=1.2)
-                await self._query(query_light(), 0x1B, 0x01, timeout=1.2)
 
                 now = self.hass.loop.time()
                 if now - self._last_slow_poll >= SLOW_POLL_INTERVAL:
