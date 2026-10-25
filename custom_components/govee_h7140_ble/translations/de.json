@@ -113,6 +113,18 @@
     "number": {
       "mist_level": {
         "name": "Nebelstufe"
+      },
+      "custom_high_gear": {
+        "name": "Custom hohe Stufe"
+      },
+      "custom_low_gear": {
+        "name": "Custom niedrige Stufe"
+      },
+      "custom_high_duration": {
+        "name": "Custom Dauer hohe Stufe"
+      },
+      "custom_low_duration": {
+        "name": "Custom Dauer niedrige Stufe"
       }
     },
     "switch": {

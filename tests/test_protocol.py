@@ -8,6 +8,7 @@ from govee_h7140_ble.protocol import (
     Frame,
     H7140State,
     build_auto_mode,
+    build_custom_mode_params,
     build_frame,
     build_light_brightness,
     build_light_power,
@@ -197,3 +198,38 @@ def test_advertisement_merge() -> None:
     assert state.misting is False
     assert state.current_humidity == 64
     assert state.rssi == -60
+
+
+def test_custom_mode_roundtrip() -> None:
+    frame = build_custom_mode_params(7, 4, 30, 45)
+    parsed = Frame.parse(frame)
+    state = H7140State()
+    state.apply_frame(parsed)
+    assert state.custom_high_gear == 7
+    assert state.custom_low_gear == 4
+    assert state.custom_high_duration == 30
+    assert state.custom_low_duration == 45
+
+
+def test_custom_mode_push_is_parsed() -> None:
+    state = H7140State()
+    state.apply_frame(
+        Frame.parse(
+            build_frame(f("ee 05 02 00 07 00 1e 00 1e 04 00 2d 00 2d 01 ff ff ff ff"))
+        )
+    )
+    assert state.custom_high_gear == 7
+    assert state.custom_low_gear == 4
+    assert state.custom_high_duration == 30
+    assert state.custom_low_duration == 45
+
+
+def test_light_echo_updates_state() -> None:
+    state = H7140State()
+    state.apply_frame(
+        Frame.parse(
+            f("3a 1b 01 01 32 00 00 00 00 00 00 00 00 00 00 00 00 00 00 13")
+        )
+    )
+    assert state.night_light_on is True
+    assert state.night_light_brightness == 50

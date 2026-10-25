@@ -10,6 +10,7 @@ Die Integration spricht das 20-Byte-Govee-BLE-Protokoll direkt. Der H7140 verwen
 |---|---|
 | Ein/Aus (Befeuchterbetrieb) | ✅ Aus live bestätigt; Ein via `33 01 01` (bei Schutzmodus ggf. physische Power-Taste) |
 | Betriebsmodus Manuell / Benutzerdefiniert / Auto | ✅ verifiziert |
+| Custom-Modus: Low/High-Stufe + Dauer | ✅ verifiziert (3A 05 02) |
 | Ziel-Luftfeuchte 40–80 % | ✅ verifiziert |
 | Manuelle Nebelstufe 1–8 | ✅ verifiziert |
 | Nachtabtlicht Ein/Aus | ✅ verifiziert |
@@ -67,6 +68,7 @@ neu starten und die Integration über die UI hinzufügen.
 - `sensor.serial`, `sensor.ble_mac`, `sensor.rssi`, `sensor.last_seen`
 - `binary_sensor.water_tank_empty` (Problem)
 - `number.mist_level`: manuelle Nebelstufe (schaltet in den manuellen Modus)
+- `number.custom_high_gear`, `number.custom_low_gear`, `number.custom_high_duration`, `number.custom_low_duration`: Custom-Modus; Schreiben schaltet in den Custom-Modus
 - `switch.auto_stop` (nur experimentell)
 - `button.refresh`
 
@@ -116,6 +118,24 @@ Kurzfassung:
 - **Govee-App schließen** und Bluetooth am Handy kurz ausschalten; nur ein BLE-Central gleichzeitig.
 - **Logs:** Bei fehlgeschlagener Protokollaushandlung steht `BLE protocol negotiation failed` bzw. `could not connect` im Log. Diagnose über Einstellungen → Geräte & Dienste → Govee H7140 BLE → Diagnose.
 - **Nachtlicht** wird über GATT geschrieben (`3A 1B …`) und funktioniert nur, wenn die Integration verbinden kann. Am getesteten 4491 wurde es auch im Standby verifiziert.
+
+## Mac-CLI / Protokoll-Library
+
+`tools/h7140_cli.py` ist der eigenständige Mac-Client, mit dem die Befehle
+verifiziert wurden. Er nutzt dieselben Protokoll- und Krypto-Module wie die
+Integration und führt den V1-Handshake automatisch aus:
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install bleak cryptography
+
+.venv/bin/python tools/h7140_cli.py scan
+.venv/bin/python tools/h7140_cli.py --name 4491 state
+.venv/bin/python tools/h7140_cli.py --name 4491 light on
+.venv/bin/python tools/h7140_cli.py --name 4491 mode auto 55
+.venv/bin/python tools/h7140_cli.py --name 4491 custom 8 5 60 60
+.venv/bin/python tools/h7140_cli.py --name 4491 raw "AA 05 00"
+```
 
 ## Debugging
 

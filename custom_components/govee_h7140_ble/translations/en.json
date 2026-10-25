@@ -113,6 +113,18 @@
     "number": {
       "mist_level": {
         "name": "Mist Level"
+      },
+      "custom_high_gear": {
+        "name": "Custom High Gear"
+      },
+      "custom_low_gear": {
+        "name": "Custom Low Gear"
+      },
+      "custom_high_duration": {
+        "name": "Custom High Duration"
+      },
+      "custom_low_duration": {
+        "name": "Custom Low Duration"
       }
     },
     "switch": {

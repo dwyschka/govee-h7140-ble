@@ -100,6 +100,33 @@ def build_custom_mode(payload: bytes = DEFAULT_CUSTOM_PAYLOAD) -> bytes:
     return build_frame(bytes([PREFIX_WRITE_READ, CMD_MODE, WORK_MODE_CUSTOM]) + payload)
 
 
+def build_custom_mode_params(
+    high_gear: int,
+    low_gear: int,
+    high_duration: int,
+    low_duration: int,
+) -> bytes:
+    """Build the normalized custom-mode payload observed on the device.
+
+    The H7140 mirrors each duration into two adjacent fields; the app's
+    Custom mode uses high/low gear plus a duration per stage.
+    """
+    high_gear = _clamp(high_gear, MIN_MIST_LEVEL, MAX_MIST_LEVEL)
+    low_gear = _clamp(low_gear, MIN_MIST_LEVEL, MAX_MIST_LEVEL)
+    high_duration = _clamp(high_duration, 5, 720)
+    low_duration = _clamp(low_duration, 5, 720)
+    payload = bytearray(16)
+    payload[1] = high_gear
+    payload[3] = high_duration
+    payload[5] = high_duration
+    payload[6] = low_gear
+    payload[8] = low_duration
+    payload[10] = low_duration
+    payload[11] = 0x01
+    payload[12:16] = b"\xff\xff\xff\xff"
+    return build_custom_mode(bytes(payload))
+
+
 def build_target_humidity(target_humidity: int) -> bytes:
     return build_auto_mode(target_humidity)
 
@@ -297,7 +324,7 @@ class AdvState:
         #   0x8802 ec 00 01 02 01 40  -> powered, humidifying, 64 %rH
         #   0x8802 ec 00 01 02 00 40  -> powered, idle,       64 %rH
         #   0x8843 ec 00 02 01 00 40  -> off / standby beacon
-        if manufacturer_id == MANUFACTURER_ID_ON and len(raw) >= 3 and raw[2] == 1:
+        if state.misting or manufacturer_id == MANUFACTURER_ID_ON and len(raw) >= 3 and raw[2] == 1:
             state.power = True
         elif manufacturer_id != MANUFACTURER_ID_ON and len(raw) >= 3 and raw[2] == 2:
             state.power = False
@@ -381,7 +408,11 @@ class H7140State:
             # overwriting the authoritative power state.
             return
 
-        if command == CMD_MODE and frame.prefix == PREFIX_QUERY:
+        if command == CMD_MODE and frame.prefix in (
+            PREFIX_QUERY,
+            PREFIX_WRITE_READ,
+            PREFIX_NOTIFY,
+        ):
             if len(payload) < 1:
                 return
             selector = payload[0]
@@ -403,19 +434,31 @@ class H7140State:
                 self.target_humidity = payload[1]
             return
 
-        if command == CMD_FLAGS_17 and frame.prefix == PREFIX_QUERY:
+        if command == CMD_FLAGS_17 and frame.prefix in (
+            PREFIX_QUERY,
+            PREFIX_WRITE_READ,
+            PREFIX_NOTIFY,
+        ):
             if len(payload) >= 2:
                 self.auto_stop = bool(payload[0])
                 self.child_lock = bool(payload[1])
             return
 
-        if command == CMD_GEAR_LIMITS_1C and frame.prefix == PREFIX_QUERY:
+        if command == CMD_GEAR_LIMITS_1C and frame.prefix in (
+            PREFIX_QUERY,
+            PREFIX_WRITE_READ,
+            PREFIX_NOTIFY,
+        ):
             if len(payload) >= 2:
                 self.low_gear = payload[0]
                 self.high_gear = payload[1]
             return
 
-        if command == CMD_LIGHT and frame.prefix == PREFIX_QUERY:
+        if command == CMD_LIGHT and frame.prefix in (
+            PREFIX_QUERY,
+            PREFIX_WRITE_READ,
+            PREFIX_NOTIFY,
+        ):
             if len(payload) < 1:
                 return
             selector = payload[0]

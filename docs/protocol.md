@@ -119,7 +119,23 @@ Beispiel (verifiziert):
 aa 05 02 00 08 00 3c 00 00 05 00 3c 00 00 01 ff ff ff ff
 ```
 
-Mögliche Bedeutung (nicht offiziell bestätigt): hohe Stufe `08`, Dauer `0x003c` = 60, niedrige Stufe `05`, Dauer `0x003c` = 60, Aktivierung `01`, keine weitere Zeit `ff ff ff ff`. Die Integration sendet den zuletzt gelernten 16-Byte-Payload unverändert, wenn in den Custom-Modus gewechselt wird.
+Feldbedeutung (live durch Write/Query verifiziert):
+
+| Byte | Bedeutung |
+|---|---|
+| 0 | immer `0` (vom Gerät zurückgesetzt) |
+| 1 | hohe Stufe (1–8) |
+| 3 | Dauer hohe Stufe in Minuten |
+| 5 | Spiegel von Byte 3 (Gerät normalisiert) |
+| 6 | niedrige Stufe (1–8) |
+| 8 | Dauer niedrige Stufe in Minuten |
+| 10 | Spiegel von Byte 8 |
+| 11 | `1` (vom Gerät beibehalten; Write wird ignoriert) |
+| 12–15 | `ff ff ff ff` (keine weitere Zeit) |
+
+Ein Write `3A 05 02 …` setzt die Parameter **und schaltet in den Custom-Modus**
+(`AA 05 00` wird `02`). Das Gerät sendet zusätzlich `EE 05 02 …` als Push.
+Die Integration bildet daraus vier Number-Entities.
 
 ### Flags `AA 17`
 

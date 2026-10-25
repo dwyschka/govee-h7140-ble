@@ -47,6 +47,7 @@ from .const import (
     RESPONSE_TIMEOUT,
     SLOW_POLL_INTERVAL,
     WORK_MODE_AUTO,
+    WORK_MODE_CUSTOM,
     WORK_MODE_MANUAL,
     WRITE_CHARACTERISTIC_UUID,
 )
@@ -64,6 +65,7 @@ from .protocol import (
     build_auto_mode,
     build_auto_stop,
     build_custom_mode,
+    build_custom_mode_params,
     build_frame,
     build_light_brightness,
     build_light_power,
@@ -666,6 +668,30 @@ class GoveeH7140Client:
         self.state.manual_gear = gear
         self.state.work_mode = "manual"
         self.state.work_mode_code = WORK_MODE_MANUAL
+        self._notify_state()
+
+    async def async_set_custom_params(
+        self,
+        high_gear: int,
+        low_gear: int,
+        high_duration: int,
+        low_duration: int,
+    ) -> None:
+        frame = build_custom_mode_params(
+            high_gear, low_gear, high_duration, low_duration
+        )
+        async with self._lock:
+            await self._ensure_connected()
+            await self._write(frame)
+            await asyncio.sleep(0.25)
+            await self._query(query_custom_mode(), 0x05, 0x02)
+            self._schedule_disconnect()
+        self.state.work_mode = "custom"
+        self.state.work_mode_code = WORK_MODE_CUSTOM
+        self.state.custom_high_gear = high_gear
+        self.state.custom_low_gear = low_gear
+        self.state.custom_high_duration = high_duration
+        self.state.custom_low_duration = low_duration
         self._notify_state()
 
     async def async_set_light_power(self, on: bool) -> None:
