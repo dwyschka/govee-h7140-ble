@@ -24,14 +24,12 @@ from homeassistant.util import dt as dt_util
 from .const import (
     CONF_ENABLE_ADV_HUMIDITY,
     CONF_ENABLE_EXPERIMENTAL,
-    CONF_ENABLE_EXPERIMENTAL_AUTO_STOP,
     CONF_ENABLE_EXPERIMENTAL_SCENES,
     CONF_IDLE_DISCONNECT,
     CONF_POLL_INTERVAL,
     DEFAULT_CUSTOM_PAYLOAD,
     DEFAULT_ENABLE_ADV_HUMIDITY,
     DEFAULT_ENABLE_EXPERIMENTAL,
-    DEFAULT_ENABLE_EXPERIMENTAL_AUTO_STOP,
     DEFAULT_ENABLE_EXPERIMENTAL_SCENES,
     DEFAULT_IDLE_DISCONNECT,
     DEFAULT_POLL_INTERVAL,
@@ -166,15 +164,6 @@ class GoveeH7140Client:
             self.options.get(
                 CONF_ENABLE_EXPERIMENTAL_SCENES,
                 DEFAULT_ENABLE_EXPERIMENTAL_SCENES,
-            )
-        )
-
-    @property
-    def auto_stop_enabled(self) -> bool:
-        return self.experimental_enabled and bool(
-            self.options.get(
-                CONF_ENABLE_EXPERIMENTAL_AUTO_STOP,
-                DEFAULT_ENABLE_EXPERIMENTAL_AUTO_STOP,
             )
         )
 
@@ -625,7 +614,7 @@ class GoveeH7140Client:
         elif code == WORK_MODE_AUTO:
             humidity = target_humidity or self.state.target_humidity or 55
             humidity = max(MIN_HUMIDITY, min(MAX_HUMIDITY, int(humidity)))
-            frame = build_auto_mode(humidity)
+            frame = build_auto_mode(humidity, bool(self.state.auto_stop))
         else:
             payload = custom_payload or self.state.custom_payload or DEFAULT_CUSTOM_PAYLOAD
             frame = build_custom_mode(payload)
@@ -648,7 +637,7 @@ class GoveeH7140Client:
         humidity = max(MIN_HUMIDITY, min(MAX_HUMIDITY, int(humidity)))
         async with self._lock:
             await self._ensure_connected()
-            await self._write(build_auto_mode(humidity))
+            await self._write(build_auto_mode(humidity, bool(self.state.auto_stop)))
             await asyncio.sleep(0.25)
             await self._query(query_target_humidity(), 0x05, 0x03)
             self._schedule_disconnect()
@@ -742,15 +731,17 @@ class GoveeH7140Client:
         self._notify_state()
 
     async def async_set_auto_stop(self, on: bool) -> None:
-        if not self.auto_stop_enabled:
-            raise ValueError("experimental Auto Stop is disabled")
+        target = self.state.target_humidity or 55
         async with self._lock:
             await self._ensure_connected()
-            await self._write(build_auto_stop(on))
+            await self._write(build_auto_stop(target, on))
             await asyncio.sleep(0.25)
-            await self._query(query_flags(), 0x17)
+            await self._query(query_target_humidity(), 0x05, 0x03)
             self._schedule_disconnect()
         self.state.auto_stop = on
+        self.state.target_humidity = target
+        self.state.work_mode = "auto"
+        self.state.work_mode_code = WORK_MODE_AUTO
         self._notify_state()
 
 

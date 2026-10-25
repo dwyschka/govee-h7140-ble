@@ -19,7 +19,7 @@ Die Integration spricht das 20-Byte-Govee-BLE-Protokoll direkt. Der H7140 verwen
 | Aktuelle Luftfeuchte aus Advertisement | ✅ (Byte 5; optional) |
 | Wassertank leer / Lack-Water | ✅ (Statusbyte; Binary Sensor) |
 | Firmware / Hardware / MCU / Seriennummer / BLE-MAC | ✅ |
-| Auto-Stop | ⚠️ experimentell, standardmäßig deaktiviert |
+| Auto-Stop | ✅ verifiziert (Bit 7 der Ziel-Luftfeuchte) |
 | Nachtabtlicht-Szenen (Forest/Ocean/Wetland/Leisurely/Sleep) | ⚠️ experimentell, standardmäßig deaktiviert |
 | Timer / Zeitpläne | ❌ noch nicht modelliert (Roh-Frame-Service vorhanden) |
 
@@ -53,9 +53,8 @@ neu starten und die Integration über die UI hinzufügen.
 - **Abfrageintervall**: Standard 20 s
 - **Nach Leerlauf trennen**: Standard 25 s; `0` trennt sofort nach jeder Aktion
 - **Aktuelle Luftfeuchte aus Advertisement**: Byte 5 des Hersteller-Payloads; die Govee-Cloud-API liefert diesen Wert nicht
-- **Experimentelle Funktionen**: Freischaltung der beiden folgenden Optionen
+- **Experimentelle Funktionen**: Freischaltung der Nachtabtlicht-Szenen
 - **Experimentelle Szenen**: ergänzt die fünf Nachtabtlicht-Szenen
-- **Experimenteller Auto-Stop-Schalter**: ergänzt einen Schalter für den 0x17-Selektor
 
 ### Entitäten
 
@@ -69,7 +68,7 @@ neu starten und die Integration über die UI hinzufügen.
 - `binary_sensor.water_tank_empty` (Problem)
 - `number.mist_level`: manuelle Nebelstufe (schaltet in den manuellen Modus)
 - `number.custom_high_gear`, `number.custom_low_gear`, `number.custom_high_duration`, `number.custom_low_duration`: Custom-Modus; Schreiben schaltet in den Custom-Modus
-- `switch.auto_stop` (nur experimentell)
+- `switch.auto_stop` (Bit 7 der Ziel-Luftfeuchte)
 - `button.refresh`
 
 ### Roh-Frame-Service
@@ -107,7 +106,8 @@ Kurzfassung:
 - **Power-Taste nach Schutzabschaltung**: Bei leerem Tank geht der H7140 in einen Schutz-/Standby-Zustand. Nach dem Auffüllen kann ein BLE-`33 01 01` ignoriert werden; dann hilft die physische Power-Taste. Das ist eine Geräte-Firmware-Eigenschaft, keine Integrationseinschränkung.
 - **Ein BLE-Central**: Die Govee-App auf dem Handy muss geschlossen sein, sonst kann Home Assistant nicht verbinden.
 - **macOS**: CoreBluetooth verwendet UUIDs, die sich nach Power-Cycles ändern können. Unter Linux/BlueZ ist die MAC stabil. Auf macOS ggf. die Integration neu hinzufügen.
-- **Szenen / Auto-Stop**: Die Frames sind noch nicht vollständig verifiziert und deshalb standardmäßig deaktiviert. Der Roh-Frame-Service hilft beim Testen.
+- **Szenen**: Die Frames sind noch nicht vollständig verifiziert und deshalb standardmäßig deaktiviert. Der Roh-Frame-Service hilft beim Testen.
+- **Timer / Zeitpläne**: noch nicht modelliert; der Roh-Frame-Service hilft beim Testen.
 - **Timer**: Die App besitzt Zeitplanseiten; das BLE-Timerformat (`aa 16`/`aa 17`) ist noch nicht vollständig entschlüsselt.
 - **Aktuelle Luftfeuchte**: Wird aus dem Advertisement gelesen. Wenn das Gerät `0` sendet (kein Sensor / Standby), bleibt der Sensor unbekannt.
 

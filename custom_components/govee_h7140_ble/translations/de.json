@@ -41,16 +41,14 @@
           "idle_disconnect": "Nach Leerlauf trennen (Sekunden, 0 = sofort)",
           "enable_adv_humidity": "Aktuelle Luftfeuchte aus Advertisement lesen",
           "enable_experimental": "Experimentelle Funktionen aktivieren",
-          "enable_experimental_scenes": "Experimentelle Nachtabtlicht-Szenen aktivieren",
-          "enable_experimental_auto_stop": "Experimentellen Auto-Stop-Schalter aktivieren"
+          "enable_experimental_scenes": "Experimentelle Nachtabtlicht-Szenen aktivieren"
         },
         "data_description": {
           "poll_interval": "Wie oft der Luftbefeuchter per GATT abgefragt wird.",
           "idle_disconnect": "BLE-Verbindung nach der letzten Aktion so lange offen halten. 0 trennt sofort.",
           "enable_adv_humidity": "Das H7140-Advertisement enthält ein Feuchtebyte; die Govee-Cloud-API liefert es nicht.",
-          "enable_experimental": "Voraussetzung für Szenen und Auto-Stop. Diese Frames sind modelliert und können firmwareabhängig sein.",
-          "enable_experimental_scenes": "Ergänzt Forest/Ocean/Wetland/Leisurely/Sleep beim Nachtabtlicht.",
-          "enable_experimental_auto_stop": "Ergänzt einen Auto-Stop-Schalter (0x17-Selektor)."
+          "enable_experimental": "Voraussetzung für die experimentellen Nachtabtlicht-Szenen.",
+          "enable_experimental_scenes": "Ergänzt Forest/Ocean/Wetland/Leisurely/Sleep beim Nachtabtlicht."
         }
       }
     }

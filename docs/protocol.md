@@ -109,6 +109,8 @@ aa 05 00 03 …   Auto
 
 `AA 05 01` liefert die manuelle Stufe (verifiziert: `08`, nach Write `05`).
 `AA 05 03` liefert die Ziel-Luftfeuchte (verifiziert: `0x37` = 55, `0x38` = 56).
+**Bit 7** des Bytes ist der **Auto-Stop-Flag**: `0xB7` = 55 % + Auto Stop an,
+`0x37` = 55 % + Auto Stop aus. Schreiben von `3A 05 03 <Wert>` setzt beides.
 `AA 1C` liefert die vom Gerät gemeldeten Grenzen (verifiziert: `01 08`).
 
 ### Custom-Parameter `AA 05 02`
@@ -139,7 +141,7 @@ Die Integration bildet daraus vier Number-Entities.
 
 ### Flags `AA 17`
 
-Live (verschlüsselte Session): `aa 17 00 00 …`. Die Bedeutung von Byte 2/3 ist nicht gesichert (Auto-Stop / Child-Lock-Kandidaten). Ein Write `3a 17 01 01` wurde vom Gerät zwar echo't, änderte den Status aber nicht. Deshalb ist der Auto-Stop-Schalter **experimentell und standardmäßig deaktiviert**.
+Live (verschlüsselte Session): `aa 17 00 00 …`. Die Bedeutung von Byte 2/3 ist nicht gesichert (Child-Lock-Kandidat). Ein Write `3a 17 01 01` wurde vom Gerät zwar echo't, änderte den Status aber nicht. Auto Stop liegt nicht hier, sondern in Bit 7 von `AA 05 03`.
 
 ### Nachtabtlicht
 
@@ -214,7 +216,7 @@ Pact:           2/1 (verschlüsselte Session)
 
 - Timer-/Zeitplanformat (`AA 16`, `AA 17`): Rohdaten werden angezeigt, aber nicht geschrieben.
 - Nachtlicht-Szenen: Kommando noch nicht gefunden; der `send_frame`-Service kann zum Testen genutzt werden.
-- Auto-Stop/Child-Lock: Kandidaten in `AA 17`, Write noch nicht bestätigt.
+- Child-Lock: Kandidat in `AA 17`, Write noch nicht bestätigt.
 - Bedeutung der Telemetrie-Bytes 6/7 in `AA 01` (ändern sich langsam; vermutlich Zähler/Timer, nicht Luftfeuchte).
 - Verschlüsselte Session bei anderen Firmware-Ständen: Die Integration erkennt Klartext vs. V1 automatisch; ein V2-Handshake ist nicht implementiert.
 

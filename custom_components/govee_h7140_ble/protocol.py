@@ -89,9 +89,15 @@ def build_manual_mode(gear: int) -> bytes:
     return build_frame(bytes([PREFIX_WRITE_READ, CMD_MODE, WORK_MODE_MANUAL, gear]))
 
 
-def build_auto_mode(target_humidity: int) -> bytes:
+def build_auto_mode(target_humidity: int, auto_stop: bool = False) -> bytes:
+    """Set Auto mode target humidity.
+
+    Bit 7 of the target-humidity byte is the device's Auto Stop flag, verified
+    on live hardware (55 % -> 0x37, 55 % + Auto Stop -> 0xB7).
+    """
     humidity = _clamp(target_humidity, MIN_HUMIDITY, MAX_HUMIDITY)
-    return build_frame(bytes([PREFIX_WRITE_READ, CMD_MODE, WORK_MODE_AUTO, humidity]))
+    value = humidity | (0x80 if auto_stop else 0x00)
+    return build_frame(bytes([PREFIX_WRITE_READ, CMD_MODE, WORK_MODE_AUTO, value]))
 
 
 def build_custom_mode(payload: bytes = DEFAULT_CUSTOM_PAYLOAD) -> bytes:
@@ -164,9 +170,9 @@ def build_light_scene(scene: int) -> bytes:
     return build_frame(bytes([PREFIX_WRITE_READ, CMD_LIGHT, 0x04, scene]))
 
 
-def build_auto_stop(on: bool) -> bytes:
-    """Experimental: Auto Stop flag via the 0x17 selector."""
-    return build_frame(bytes([PREFIX_WRITE_READ, CMD_FLAGS_17, 0x01, 0x01 if on else 0x00]))
+def build_auto_stop(target_humidity: int, on: bool) -> bytes:
+    """Set the Auto Stop flag together with the current target humidity."""
+    return build_auto_mode(target_humidity, on)
 
 
 def query_power() -> bytes:
@@ -431,7 +437,9 @@ class H7140State:
                 self.custom_low_gear = custom[6] or None
                 self.custom_low_duration = custom[8] or None
             elif selector == 0x03 and len(payload) >= 2:
-                self.target_humidity = payload[1]
+                raw_target = payload[1]
+                self.target_humidity = raw_target & 0x7F
+                self.auto_stop = bool(raw_target & 0x80)
             return
 
         if command == CMD_FLAGS_17 and frame.prefix in (
@@ -439,8 +447,9 @@ class H7140State:
             PREFIX_WRITE_READ,
             PREFIX_NOTIFY,
         ):
+            # The exact meaning of these two flags is not decoded yet.  Auto
+            # Stop is carried in bit 7 of the target-humidity byte.
             if len(payload) >= 2:
-                self.auto_stop = bool(payload[0])
                 self.child_lock = bool(payload[1])
             return
 

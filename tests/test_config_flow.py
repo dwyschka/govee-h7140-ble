@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 import pytest
 from homeassistant import config_entries, data_entry_flow
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.govee_h7140_ble.const import CONF_ADDRESS, DOMAIN
 
@@ -53,19 +54,12 @@ async def test_manual_flow_not_found(hass, enable_custom_integrations):
 
 @pytest.mark.asyncio
 async def test_options_flow(hass, enable_custom_integrations):
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="Test",
+        data={CONF_ADDRESS: "AA:BB:CC:DD:EE:FF", "name": "Test"},
     )
-    with patch(
-        "custom_components.govee_h7140_ble.config_flow.async_ble_device_from_address",
-        return_value=object(),
-    ):
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"],
-            {CONF_ADDRESS: "AA:BB:CC:DD:EE:FF", "name": "Test"},
-        )
-    assert result["type"] is data_entry_flow.FlowResultType.CREATE_ENTRY
-    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    entry.add_to_hass(hass)
 
     result = await hass.config_entries.options.async_init(entry.entry_id)
     assert result["type"] is data_entry_flow.FlowResultType.FORM

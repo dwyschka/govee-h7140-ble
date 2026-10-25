@@ -41,16 +41,14 @@
           "idle_disconnect": "Disconnect after idle (seconds, 0 = immediately)",
           "enable_adv_humidity": "Read current humidity from advertisements",
           "enable_experimental": "Enable experimental features",
-          "enable_experimental_scenes": "Enable experimental night-light scenes",
-          "enable_experimental_auto_stop": "Enable experimental Auto Stop switch"
+          "enable_experimental_scenes": "Enable experimental night-light scenes"
         },
         "data_description": {
           "poll_interval": "How often the humidifier is polled over GATT.",
           "idle_disconnect": "Keep the BLE link open for this long after the last operation. 0 disconnects immediately.",
           "enable_adv_humidity": "The H7140 advertisement contains a humidity byte; it is not exposed by Govee's cloud API.",
-          "enable_experimental": "Required for the scene and Auto Stop switches. These frames are modelled and may need firmware-specific tuning.",
-          "enable_experimental_scenes": "Adds Forest/Ocean/Wetland/Leisurely/Sleep effects to the night light.",
-          "enable_experimental_auto_stop": "Adds an Auto Stop switch (0x17 selector)."
+          "enable_experimental": "Required for the experimental night-light scenes.",
+          "enable_experimental_scenes": "Adds Forest/Ocean/Wetland/Leisurely/Sleep effects to the night light."
         }
       }
     }

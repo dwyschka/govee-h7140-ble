@@ -129,7 +129,7 @@ def test_flags_and_limits() -> None:
             f("aa 17 01 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 bd")
         )
     )
-    assert state.auto_stop is True
+    assert state.auto_stop is None
     assert state.child_lock is True
     state.apply_frame(
         Frame.parse(
@@ -138,6 +138,20 @@ def test_flags_and_limits() -> None:
     )
     assert state.low_gear == 1
     assert state.high_gear == 8
+
+
+def test_auto_stop_bit() -> None:
+    state = H7140State()
+    state.apply_frame(
+        Frame.parse(
+            f("aa 05 03 b7 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 1b")
+        )
+    )
+    assert state.target_humidity == 55
+    assert state.auto_stop is True
+    assert build_auto_mode(55, True) == f(
+        "3a 05 03 b7 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 8b"
+    )
 
 
 def test_info_frames() -> None:

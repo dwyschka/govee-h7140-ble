@@ -61,6 +61,7 @@ from govee_h7140_ble.protocol import (
     Frame,
     H7140State,
     build_auto_mode,
+    build_auto_stop,
     build_custom_mode_params,
     build_frame,
     build_light_brightness,
@@ -265,7 +266,13 @@ async def run(args: argparse.Namespace) -> None:
             await asyncio.sleep(0.8)
         elif args.command == "mode":
             if args.value == "auto":
-                await session._write(build_auto_mode(args.number or 55))
+                await session.query(query_target_humidity(), 0x05, 0x03)
+                await session._write(
+                    build_auto_mode(
+                        args.number or 55,
+                        bool(session.state.auto_stop),
+                    )
+                )
             elif args.value == "manual":
                 await session._write(build_manual_mode(args.number or 5))
             else:
@@ -279,7 +286,18 @@ async def run(args: argparse.Namespace) -> None:
                 )
             await asyncio.sleep(0.8)
         elif args.command == "target":
-            await session._write(build_auto_mode(args.number or 55))
+            await session.query(query_target_humidity(), 0x05, 0x03)
+            await session._write(
+                build_auto_mode(
+                    args.number or 55,
+                    bool(session.state.auto_stop),
+                )
+            )
+            await asyncio.sleep(0.8)
+        elif args.command == "autostop":
+            await session.query(query_target_humidity(), 0x05, 0x03)
+            target = session.state.target_humidity or 55
+            await session._write(build_auto_stop(target, args.value == "on"))
             await asyncio.sleep(0.8)
         elif args.command == "gear":
             await session._write(build_manual_mode(args.number or 5))
@@ -326,6 +344,8 @@ def parser() -> argparse.ArgumentParser:
     mode.add_argument("number", nargs="?", type=int)
     target = sub.add_parser("target")
     target.add_argument("number", type=int)
+    autostop = sub.add_parser("autostop")
+    autostop.add_argument("value", choices=["on", "off"])
     gear = sub.add_parser("gear")
     gear.add_argument("number", type=int)
     custom = sub.add_parser("custom")

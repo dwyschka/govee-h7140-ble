@@ -23,13 +23,11 @@ from .const import (
     CONF_ADDRESS,
     CONF_ENABLE_ADV_HUMIDITY,
     CONF_ENABLE_EXPERIMENTAL,
-    CONF_ENABLE_EXPERIMENTAL_AUTO_STOP,
     CONF_ENABLE_EXPERIMENTAL_SCENES,
     CONF_IDLE_DISCONNECT,
     CONF_POLL_INTERVAL,
     DEFAULT_ENABLE_ADV_HUMIDITY,
     DEFAULT_ENABLE_EXPERIMENTAL,
-    DEFAULT_ENABLE_EXPERIMENTAL_AUTO_STOP,
     DEFAULT_ENABLE_EXPERIMENTAL_SCENES,
     DEFAULT_IDLE_DISCONNECT,
     DEFAULT_NAME,
@@ -197,15 +195,6 @@ class GoveeH7140OptionsFlow(OptionsFlow):
                         options.get(
                             CONF_ENABLE_EXPERIMENTAL_SCENES,
                             DEFAULT_ENABLE_EXPERIMENTAL_SCENES,
-                        )
-                    ),
-                ): bool,
-                vol.Optional(
-                    CONF_ENABLE_EXPERIMENTAL_AUTO_STOP,
-                    default=bool(
-                        options.get(
-                            CONF_ENABLE_EXPERIMENTAL_AUTO_STOP,
-                            DEFAULT_ENABLE_EXPERIMENTAL_AUTO_STOP,
                         )
                     ),
                 ): bool,

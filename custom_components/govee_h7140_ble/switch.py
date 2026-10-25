@@ -21,15 +21,13 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     coordinator: GoveeH7140Coordinator = entry.runtime_data
-    if coordinator.client.auto_stop_enabled:
-        async_add_entities([GoveeH7140AutoStop(coordinator)])
+    async_add_entities([GoveeH7140AutoStop(coordinator)])
 
 
 class GoveeH7140AutoStop(GoveeH7140Entity, SwitchEntity):
-    """Experimental Auto Stop switch."""
+    """Auto Stop switch (bit 7 of the Auto target humidity)."""
 
     _attr_translation_key = "auto_stop"
-    _attr_entity_registry_enabled_default = False
     _attr_icon = "mdi:water-off"
 
     def __init__(self, coordinator: GoveeH7140Coordinator) -> None:
