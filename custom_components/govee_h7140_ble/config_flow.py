@@ -22,13 +22,9 @@ from homeassistant.core import callback
 from .const import (
     CONF_ADDRESS,
     CONF_ENABLE_ADV_HUMIDITY,
-    CONF_ENABLE_EXPERIMENTAL,
-    CONF_ENABLE_EXPERIMENTAL_SCENES,
     CONF_IDLE_DISCONNECT,
     CONF_POLL_INTERVAL,
     DEFAULT_ENABLE_ADV_HUMIDITY,
-    DEFAULT_ENABLE_EXPERIMENTAL,
-    DEFAULT_ENABLE_EXPERIMENTAL_SCENES,
     DEFAULT_IDLE_DISCONNECT,
     DEFAULT_NAME,
     DEFAULT_POLL_INTERVAL,
@@ -140,7 +136,7 @@ class GoveeH7140ConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class GoveeH7140OptionsFlow(OptionsFlow):
-    """Options for polling/experimental features."""
+    """Options for polling and connection behavior."""
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -177,24 +173,6 @@ class GoveeH7140OptionsFlow(OptionsFlow):
                         options.get(
                             CONF_ENABLE_ADV_HUMIDITY,
                             DEFAULT_ENABLE_ADV_HUMIDITY,
-                        )
-                    ),
-                ): bool,
-                vol.Optional(
-                    CONF_ENABLE_EXPERIMENTAL,
-                    default=bool(
-                        options.get(
-                            CONF_ENABLE_EXPERIMENTAL,
-                            DEFAULT_ENABLE_EXPERIMENTAL,
-                        )
-                    ),
-                ): bool,
-                vol.Optional(
-                    CONF_ENABLE_EXPERIMENTAL_SCENES,
-                    default=bool(
-                        options.get(
-                            CONF_ENABLE_EXPERIMENTAL_SCENES,
-                            DEFAULT_ENABLE_EXPERIMENTAL_SCENES,
                         )
                     ),
                 ): bool,

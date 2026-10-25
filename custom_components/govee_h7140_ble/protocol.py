@@ -29,7 +29,6 @@ from .const import (
     MIN_BRIGHTNESS,
     MIN_HUMIDITY,
     MIN_MIST_LEVEL,
-    NIGHT_LIGHT_SCENES,
     WORK_MODE_AUTO,
     WORK_MODE_CUSTOM,
     WORK_MODE_MANUAL,
@@ -580,9 +579,3 @@ class H7140State:
             "advertisement": self.adv.as_dict() if self.adv else None,
             "last_seen": self.last_seen.isoformat() if self.last_seen else None,
         }
-
-
-def scene_name(scene: int | None) -> str | None:
-    if scene is None:
-        return None
-    return NIGHT_LIGHT_SCENES.get(scene)

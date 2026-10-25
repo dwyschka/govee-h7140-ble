@@ -218,6 +218,7 @@ Pact:           2/1 (verschlüsselte Session)
 - Nachtlicht-Szenen: Kommando noch nicht gefunden; der `send_frame`-Service kann zum Testen genutzt werden.
 - Child-Lock: Kandidat in `AA 17`, Write noch nicht bestätigt.
 - Bedeutung der Telemetrie-Bytes 6/7 in `AA 01` (ändern sich langsam; vermutlich Zähler/Timer, nicht Luftfeuchte).
+- Direkte Bindung an ein Govee-Thermo-Hygrometer: App-Feature, BLE-Pairing-Kommando noch nicht analysiert. HA-seitig ist die Regelung über `switch.power` + `generic_hygrostat` möglich.
 - Verschlüsselte Session bei anderen Firmware-Ständen: Die Integration erkennt Klartext vs. V1 automatisch; ein V2-Handshake ist nicht implementiert.
 
 ## Quellen

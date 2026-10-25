@@ -21,7 +21,37 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     coordinator: GoveeH7140Coordinator = entry.runtime_data
-    async_add_entities([GoveeH7140AutoStop(coordinator)])
+    async_add_entities(
+        [
+            GoveeH7140PowerSwitch(coordinator),
+            GoveeH7140AutoStop(coordinator),
+        ]
+    )
+
+
+class GoveeH7140PowerSwitch(GoveeH7140Entity, SwitchEntity):
+    """Power switch for the humidifier.
+
+    This mirrors ``humidifier.turn_on``/``turn_off`` and is intentionally
+    exposed separately so Home Assistant helpers such as ``generic_hygrostat``
+    can use it as their controlled switch.
+    """
+
+    _attr_translation_key = "power"
+    _attr_icon = "mdi:power"
+
+    def __init__(self, coordinator: GoveeH7140Coordinator) -> None:
+        super().__init__(coordinator, "switch_power")
+
+    @property
+    def is_on(self) -> bool:
+        return bool(self.device_state.power)
+
+    async def async_turn_on(self, **kwargs) -> None:
+        await self.coordinator.client.async_set_power(True)
+
+    async def async_turn_off(self, **kwargs) -> None:
+        await self.coordinator.client.async_set_power(False)
 
 
 class GoveeH7140AutoStop(GoveeH7140Entity, SwitchEntity):

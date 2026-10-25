@@ -35,20 +35,16 @@
     "step": {
       "init": {
         "title": "Govee H7140 Optionen",
-        "description": "Abfrage, Verbindung und experimentelle Protokolloptionen.",
+        "description": "Abfrage- und Verbindungsoptionen.",
         "data": {
           "poll_interval": "Abfrageintervall (Sekunden)",
           "idle_disconnect": "Nach Leerlauf trennen (Sekunden, 0 = sofort)",
-          "enable_adv_humidity": "Aktuelle Luftfeuchte aus Advertisement lesen",
-          "enable_experimental": "Experimentelle Funktionen aktivieren",
-          "enable_experimental_scenes": "Experimentelle Nachtabtlicht-Szenen aktivieren"
+          "enable_adv_humidity": "Aktuelle Luftfeuchte aus Advertisement lesen"
         },
         "data_description": {
           "poll_interval": "Wie oft der Luftbefeuchter per GATT abgefragt wird.",
           "idle_disconnect": "BLE-Verbindung nach der letzten Aktion so lange offen halten. 0 trennt sofort.",
-          "enable_adv_humidity": "Das H7140-Advertisement enthält ein Feuchtebyte; die Govee-Cloud-API liefert es nicht.",
-          "enable_experimental": "Voraussetzung für die experimentellen Nachtabtlicht-Szenen.",
-          "enable_experimental_scenes": "Ergänzt Forest/Ocean/Wetland/Leisurely/Sleep beim Nachtabtlicht."
+          "enable_adv_humidity": "Das H7140-Advertisement enthält ein Feuchtebyte; die Govee-Cloud-API liefert es nicht."
         }
       }
     }
@@ -128,6 +124,9 @@
     "switch": {
       "auto_stop": {
         "name": "Auto-Stop"
+      },
+      "power": {
+        "name": "Ein/Aus"
       }
     },
     "button": {

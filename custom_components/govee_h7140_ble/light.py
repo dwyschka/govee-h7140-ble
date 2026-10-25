@@ -7,17 +7,14 @@ from typing import Any, ClassVar
 
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
-    ATTR_EFFECT,
     ATTR_RGB_COLOR,
     ColorMode,
     LightEntity,
-    LightEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import NIGHT_LIGHT_SCENES, SCENE_NAME_TO_ID
 from .coordinator import GoveeH7140Coordinator
 from .entity import GoveeH7140Entity
 
@@ -42,8 +39,6 @@ class GoveeH7140NightLight(GoveeH7140Entity, LightEntity):
 
     def __init__(self, coordinator: GoveeH7140Coordinator) -> None:
         super().__init__(coordinator, "night_light")
-        if coordinator.client.scenes_enabled:
-            self._attr_supported_features = LightEntityFeature.EFFECT
 
     @property
     def is_on(self) -> bool:
@@ -62,27 +57,13 @@ class GoveeH7140NightLight(GoveeH7140Entity, LightEntity):
     def rgb_color(self) -> tuple[int, int, int] | None:
         return self.device_state.night_light_rgb
 
-    @property
-    def effect_list(self) -> list[str] | None:
-        if not self.coordinator.client.scenes_enabled:
-            return None
-        return list(NIGHT_LIGHT_SCENES.values())
-
-    @property
-    def effect(self) -> str | None:
-        scene = self.device_state.night_light_scene
-        if scene is None:
-            return None
-        return NIGHT_LIGHT_SCENES.get(scene)
-
     async def async_turn_on(self, **kwargs: Any) -> None:
         client = self.coordinator.client
-        effect = kwargs.get(ATTR_EFFECT)
         rgb = kwargs.get(ATTR_RGB_COLOR)
         brightness = kwargs.get(ATTR_BRIGHTNESS)
 
         if not self.is_on and not any(
-            value is not None for value in (effect, rgb, brightness)
+            value is not None for value in (rgb, brightness)
         ):
             await client.async_set_light_power(True)
             return
@@ -95,12 +76,7 @@ class GoveeH7140NightLight(GoveeH7140Entity, LightEntity):
         if rgb is not None:
             red, green, blue = rgb
             await client.async_set_light_rgb(red, green, blue)
-        if effect is not None:
-            scene = SCENE_NAME_TO_ID.get(str(effect))
-            if scene is None:
-                raise ValueError(f"unknown night-light scene: {effect}")
-            await client.async_set_light_scene(scene)
-        if not any(value is not None for value in (effect, rgb, brightness)):
+        if not any(value is not None for value in (rgb, brightness)):
             await client.async_set_light_power(True)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
@@ -114,5 +90,4 @@ class GoveeH7140NightLight(GoveeH7140Entity, LightEntity):
                 "on": state.night_light_on,
                 "brightness": state.night_light_brightness,
             },
-            "night_light_scene": state.night_light_scene,
         }

@@ -23,14 +23,10 @@ from homeassistant.util import dt as dt_util
 
 from .const import (
     CONF_ENABLE_ADV_HUMIDITY,
-    CONF_ENABLE_EXPERIMENTAL,
-    CONF_ENABLE_EXPERIMENTAL_SCENES,
     CONF_IDLE_DISCONNECT,
     CONF_POLL_INTERVAL,
     DEFAULT_CUSTOM_PAYLOAD,
     DEFAULT_ENABLE_ADV_HUMIDITY,
-    DEFAULT_ENABLE_EXPERIMENTAL,
-    DEFAULT_ENABLE_EXPERIMENTAL_SCENES,
     DEFAULT_IDLE_DISCONNECT,
     DEFAULT_POLL_INTERVAL,
     DOMAIN,
@@ -68,7 +64,6 @@ from .protocol import (
     build_light_brightness,
     build_light_power,
     build_light_rgb,
-    build_light_scene,
     build_manual_mode,
     build_power,
     checksum,
@@ -80,7 +75,6 @@ from .protocol import (
     query_hw_version,
     query_light,
     query_light_rgb,
-    query_light_scene,
     query_mac,
     query_manual_gear,
     query_mcu_hw,
@@ -149,21 +143,6 @@ class GoveeH7140Client:
         return bool(
             self.options.get(
                 CONF_ENABLE_ADV_HUMIDITY, DEFAULT_ENABLE_ADV_HUMIDITY
-            )
-        )
-
-    @property
-    def experimental_enabled(self) -> bool:
-        return bool(
-            self.options.get(CONF_ENABLE_EXPERIMENTAL, DEFAULT_ENABLE_EXPERIMENTAL)
-        )
-
-    @property
-    def scenes_enabled(self) -> bool:
-        return self.experimental_enabled and bool(
-            self.options.get(
-                CONF_ENABLE_EXPERIMENTAL_SCENES,
-                DEFAULT_ENABLE_EXPERIMENTAL_SCENES,
             )
         )
 
@@ -553,7 +532,6 @@ class GoveeH7140Client:
                     await self._query(query_flags(), 0x17, timeout=1.2)
                     await self._query(query_gear_limits(), 0x1C, timeout=1.2)
                     await self._query(query_light_rgb(), 0x1B, 0x05, timeout=1.2)
-                    await self._query(query_light_scene(), 0x1B, 0x04, timeout=1.2)
                     await self._query(query_timer(), 0x16, timeout=1.2)
 
                 if not self._metadata_loaded:
@@ -714,20 +692,6 @@ class GoveeH7140Client:
             self._schedule_disconnect()
         self.state.night_light_on = True
         self.state.night_light_rgb = (red, green, blue)
-        self._notify_state()
-
-    async def async_set_light_scene(self, scene: int) -> None:
-        if not self.scenes_enabled:
-            raise ValueError("experimental night-light scenes are disabled")
-        scene = max(1, min(5, int(scene)))
-        async with self._lock:
-            await self._ensure_connected()
-            await self._write(build_light_scene(scene))
-            await asyncio.sleep(0.25)
-            await self._query(query_light_scene(), 0x1B, 0x04)
-            self._schedule_disconnect()
-        self.state.night_light_on = True
-        self.state.night_light_scene = scene
         self._notify_state()
 
     async def async_set_auto_stop(self, on: bool) -> None:

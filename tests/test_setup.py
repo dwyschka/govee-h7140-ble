@@ -46,6 +46,7 @@ async def test_setup_and_unload(hass, enable_custom_integrations):
         entity_id.startswith("binary_sensor.") for entity_id in entity_ids
     ), entity_ids
     assert any(entity_id.startswith("number.") for entity_id in entity_ids), entity_ids
+    assert any(entity_id.startswith("switch.") for entity_id in entity_ids), entity_ids
 
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()

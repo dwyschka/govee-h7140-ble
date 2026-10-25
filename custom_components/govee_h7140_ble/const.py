@@ -23,16 +23,12 @@ CONF_ADDRESS: Final = "address"
 CONF_NAME: Final = "name"
 CONF_POLL_INTERVAL: Final = "poll_interval"
 CONF_IDLE_DISCONNECT: Final = "idle_disconnect"
-CONF_ENABLE_EXPERIMENTAL: Final = "enable_experimental"
 CONF_ENABLE_ADV_HUMIDITY: Final = "enable_adv_humidity"
-CONF_ENABLE_EXPERIMENTAL_SCENES: Final = "enable_experimental_scenes"
 
 DEFAULT_NAME: Final = "H7140"
 DEFAULT_POLL_INTERVAL: Final = 20
 DEFAULT_IDLE_DISCONNECT: Final = 25
-DEFAULT_ENABLE_EXPERIMENTAL: Final = False
 DEFAULT_ENABLE_ADV_HUMIDITY: Final = True
-DEFAULT_ENABLE_EXPERIMENTAL_SCENES: Final = False
 
 MIN_POLL_INTERVAL: Final = 10
 MAX_POLL_INTERVAL: Final = 300
@@ -66,14 +62,6 @@ WORK_MODE_TO_NAME: Final = {
 NAME_TO_WORK_MODE: Final = {v: k for k, v in WORK_MODE_TO_NAME.items()}
 WORK_MODES: Final = ["manual", "custom", "auto"]
 
-NIGHT_LIGHT_SCENES: Final = {
-    1: "Forest",
-    2: "Ocean",
-    3: "Wetland",
-    4: "Leisurely",
-    5: "Sleep",
-}
-SCENE_NAME_TO_ID: Final = {v: k for k, v in NIGHT_LIGHT_SCENES.items()}
 
 # Default custom-mode payload observed on a live H7140.  The exact meaning of
 # every byte is not publicly documented; it is used verbatim when switching to

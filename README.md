@@ -20,8 +20,8 @@ Die Integration spricht das 20-Byte-Govee-BLE-Protokoll direkt. Der H7140 verwen
 | Wassertank leer / Lack-Water | ✅ (Statusbyte; Binary Sensor) |
 | Firmware / Hardware / MCU / Seriennummer / BLE-MAC | ✅ |
 | Auto-Stop | ✅ verifiziert (Bit 7 der Ziel-Luftfeuchte) |
-| Nachtabtlicht-Szenen (Forest/Ocean/Wetland/Leisurely/Sleep) | ⚠️ experimentell, standardmäßig deaktiviert |
-| Timer / Zeitpläne | ❌ noch nicht modelliert (Roh-Frame-Service vorhanden) |
+| Verknüpfung mit Thermostat / Hygrometer | ✅ über HA-Helfer „Generic Hygrostat“ und `switch.power` |
+| Nachtabtlicht-Szenen / Timer | ❌ nicht vorgesehen (App-/Cloud-Funktionen) |
 
 ## Voraussetzungen
 
@@ -53,13 +53,11 @@ neu starten und die Integration über die UI hinzufügen.
 - **Abfrageintervall**: Standard 20 s
 - **Nach Leerlauf trennen**: Standard 25 s; `0` trennt sofort nach jeder Aktion
 - **Aktuelle Luftfeuchte aus Advertisement**: Byte 5 des Hersteller-Payloads; die Govee-Cloud-API liefert diesen Wert nicht
-- **Experimentelle Funktionen**: Freischaltung der Nachtabtlicht-Szenen
-- **Experimentelle Szenen**: ergänzt die fünf Nachtabtlicht-Szenen
 
 ### Entitäten
 
 - `humidifier`: Hauptgerät (Ein/Aus, Ziel-Luftfeuchte, Modus, Aktion)
-- `light.night_light`: Nachtabtlicht (RGB, Helligkeit, ggf. Szenen)
+- `light.night_light`: Nachtabtlicht (RGB, Helligkeit)
 - `sensor.current_humidity`: aktuelle Luftfeuchte aus dem Advertisement
 - `sensor.target_humidity`, `sensor.work_mode`, `sensor.mist_level`
 - `sensor.low_gear`, `sensor.high_gear` (vom Gerät gemeldete Stufengrenzen)
@@ -68,6 +66,7 @@ neu starten und die Integration über die UI hinzufügen.
 - `binary_sensor.water_tank_empty` (Problem)
 - `number.mist_level`: manuelle Nebelstufe (schaltet in den manuellen Modus)
 - `number.custom_high_gear`, `number.custom_low_gear`, `number.custom_high_duration`, `number.custom_low_duration`: Custom-Modus; Schreiben schaltet in den Custom-Modus
+- `switch.power`: Ein/Aus, verwendbar als Schalter für den HA-Helfer „Generic Hygrostat“
 - `switch.auto_stop` (Bit 7 der Ziel-Luftfeuchte)
 - `button.refresh`
 
@@ -100,15 +99,50 @@ Kurzfassung:
 - Modus/Ziel: `3A 05 01 <Stufe>`, `3A 05 02 <16 Byte>`, `3A 05 03 <Feuchte>`
 - Nachtabtlicht: `3A 1B 01 01 <an/aus>`, `3A 1B 01 02 <Helligkeit>`, `3A 1B 05 0D <R><G><B>`
 
+## Verknüpfung mit einem Thermostat / Hygrometer
+
+Die Integration stellt dafür **`switch.power`** bereit. Home Assistant hat einen
+eingebauten Helfer **Generic Hygrostat** (deutsch: „Generischer Hygrostat“), der
+einen Feuchtesensor mit diesem Schalter verbindet:
+
+1. Den H7140 in den Modus **Manuell** schalten und eine Nebelstufe wählen
+   (z. B. 4). Im Auto-Modus würde das Gerät zusätzlich nach seinem eigenen
+   Sensor regeln.
+2. **Einstellungen → Geräte & Dienste → Helfer → Generic Hygrostat**.
+3. **Feuchtesensor**: den Sensor des Thermostats/Hygrometers auswählen
+   (Device Class `humidity`).
+4. **Luftbefeuchter**: `switch.<h7140>_power` auswählen.
+5. Zielwert, Trocken-/Nass-Toleranz und optional eine Mindestlaufzeit setzen.
+6. Den neu erzeugten `humidifier.<name>` im Dashboard oder in Automationen
+   verwenden.
+
+Wenn der Thermostat die Luftfeuchte nur als Attribut liefert (z. B.
+`climate.wohnzimmer` mit `current_humidity`), zuerst einen Template-Sensor
+anlegen:
+
+```yaml
+template:
+  - sensor:
+      - name: Wohnzimmer Luftfeuchte
+        unique_id: wohnzimmer_luftfeuchte
+        unit_of_measurement: "%"
+        device_class: humidity
+        state_class: measurement
+        state: "{{ state_attr('climate.wohnzimmer', 'current_humidity') }}"
+```
+
+Das ist die **Home-Assistant-seitige** Verknüpfung. Die direkte Kopplung
+H7140 ↔ Govee-Thermo-Hygrometer (App-Feature) ist noch nicht im BLE-Protokoll
+implementiert; dafür wäre ein Pairing-Capture nötig. Für die Regelung über
+einen bereits in Home Assistant vorhandenen Sensor ist sie nicht erforderlich.
+
 ## Bekannte Einschränkungen
 
 - **Ein/Aus-Semantik**: Der H7140 bleibt im Standby per BLE erreichbar. Die Integration setzt `is_on`/`action` anhand des „humidifying“-Bits im Advertisement (Byte 4) und des letzten `33 01`-Befehls. Ein `33 01 00` stoppt die Befeuchtung; das Gerät kann dabei weiterhin Advertisement und GATT-Queries beantworten. Das ist kein elektrisches Ausschalten.
 - **Power-Taste nach Schutzabschaltung**: Bei leerem Tank geht der H7140 in einen Schutz-/Standby-Zustand. Nach dem Auffüllen kann ein BLE-`33 01 01` ignoriert werden; dann hilft die physische Power-Taste. Das ist eine Geräte-Firmware-Eigenschaft, keine Integrationseinschränkung.
 - **Ein BLE-Central**: Die Govee-App auf dem Handy muss geschlossen sein, sonst kann Home Assistant nicht verbinden.
 - **macOS**: CoreBluetooth verwendet UUIDs, die sich nach Power-Cycles ändern können. Unter Linux/BlueZ ist die MAC stabil. Auf macOS ggf. die Integration neu hinzufügen.
-- **Szenen**: Die Frames sind noch nicht vollständig verifiziert und deshalb standardmäßig deaktiviert. Der Roh-Frame-Service hilft beim Testen.
-- **Timer / Zeitpläne**: noch nicht modelliert; der Roh-Frame-Service hilft beim Testen.
-- **Timer**: Die App besitzt Zeitplanseiten; das BLE-Timerformat (`aa 16`/`aa 17`) ist noch nicht vollständig entschlüsselt.
+- **Szenen / Timer**: bewusst nicht implementiert; das sind App-/Cloud-Komfortfunktionen. Der Roh-Frame-Service bleibt für Experimente verfügbar.
 - **Aktuelle Luftfeuchte**: Wird aus dem Advertisement gelesen. Wenn das Gerät `0` sendet (kein Sensor / Standby), bleibt der Sensor unbekannt.
 
 ## Fehlersuche: „überall unbekannt“
