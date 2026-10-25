@@ -51,7 +51,7 @@ neu starten und die Integration über die UI hinzufügen.
 ### Optionen
 
 - **Abfrageintervall**: Standard 20 s
-- **Nach Leerlauf trennen**: Standard 25 s; `0` trennt sofort nach jeder Aktion
+- **Nach Leerlauf trennen**: Standard 0 s (sofort nach jeder Aktion trennen); eignet sich für ESPHome-Bluetooth-Proxys mit begrenzten Verbindungsslots
 - **Aktuelle Luftfeuchte aus Advertisement**: Byte 5 des Hersteller-Payloads; die Govee-Cloud-API liefert diesen Wert nicht
 
 ### Entitäten
